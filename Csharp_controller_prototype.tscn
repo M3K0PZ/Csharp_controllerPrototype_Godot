@@ -1,0 +1,30 @@
+[gd_scene load_steps=5 format=3 uid="uid://b5kosey2wrgqo"]
+
+[ext_resource type="Script" uid="uid://cbyafu52eqwuv" path="res://addons/Protocontroller/PrototypeController.cs" id="1_5gamd"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_fuk1j"]
+albedo_color = Color(0.2808, 0.78, 0.42224, 1)
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_2ilfc"]
+material = SubResource("StandardMaterial3D_fuk1j")
+radius = 0.45
+height = 1.75
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_5gamd"]
+radius = 0.45
+height = 1.7
+
+[node name="ProtoController" type="CharacterBody3D"]
+script = ExtResource("1_5gamd")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("CapsuleMesh_2ilfc")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("CapsuleShape3D_5gamd")
+
+[node name="Node3D" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
+
+[node name="Camera3D" type="Camera3D" parent="Node3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0)
