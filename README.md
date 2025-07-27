@@ -32,6 +32,12 @@ This project provides a reusable controller for prototyping in Godot using C#. T
 3. Drag and drop the folder into your project, under the addons folder (if not created, do so)
 4. Customize as needed for your usage.
 
+<p align="center">
+    <img src="image.png" alt="alt text" />
+    <br>
+    <em>It should look like that.</em>
+</p>
+
 ### I can look around but I can't move !?
 Make sure to set the input actions in your project settings.
 You can see what the controller expects in the editor, by opening the Input Actions tab after clicking on the prototype, you can also rename them if you want.
