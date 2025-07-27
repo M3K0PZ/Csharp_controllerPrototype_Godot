@@ -23,13 +23,13 @@ This project provides a reusable controller for prototyping in Godot using C#. T
 ## Usage
 
 ### You already have a Godot project set up with C#
-1. Drag and drop the folder and use the scene.
+1. Drag and drop the folder in the addons folder and use the scene.
 2. Customize as needed for your usage.
 
 ### You want to create a new Godot project with C# and use the controller
 1. Create a new Godot project with the .Net version
 2. Make sure to go into project -> tools -> C# and Create a C# solution
-3. Drag and drop the folder into your project
+3. Drag and drop the folder into your project, under the addons folder (if not created, do so)
 4. Customize as needed for your usage.
 
 ### I can look around but I can't move !?
