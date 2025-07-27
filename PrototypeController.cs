@@ -1,8 +1,3 @@
-// C# Controller Prototype for Godot Version 1.0 by Kopz
-// MIT License
-// This script provides a reusable controller for prototyping in Godot using C#.
-
-
 using Godot;
 using System.Collections.Generic;
 
@@ -20,7 +15,7 @@ public partial class PrototypeController : CharacterBody3D
 
     [ExportGroup("Jump Settings")]
     [Export] private float _jumpVelocity = 4.0f;
-    [Export] private float _gravityMultiplier = 1.5f;
+    [Export] private float _gravityMultiplier = 1f;
     [Export] private float _coyoteTime = 0.15f;
     [Export] private float _jumpBufferTime = 0.1f;
 
@@ -37,6 +32,7 @@ public partial class PrototypeController : CharacterBody3D
     [Export] private bool _enableLook = true;
     [Export] private bool _enableSprint = true;
     [Export] private bool _enableCrouch = true;
+    [Export] private bool _enableNoclip = true;
 
     [ExportGroup("Input Actions")]
     [Export] private StringName _moveForwardAction = "move_forward";
@@ -46,6 +42,7 @@ public partial class PrototypeController : CharacterBody3D
     [Export] private StringName _jumpAction = "move_jump";
     [Export] private StringName _sprintAction = "move_sprint";
     [Export] private StringName _crouchAction = "move_crouch";
+    [Export] private StringName _NoclipAction = "move_noclip";
     #endregion
 
     #region Node References
@@ -54,6 +51,13 @@ public partial class PrototypeController : CharacterBody3D
     private CollisionShape3D _collisionShape;
     #endregion
 
+    #region Noclip needed var
+    private uint _originalCollisionLayer;
+    private uint _originalCollisionMask;
+    private float _originalGravityMultiplier;
+    #endregion
+
+
     #region Runtime State
     private float _verticalLookRotation;
     private float _coyoteTimer;
@@ -61,6 +65,7 @@ public partial class PrototypeController : CharacterBody3D
     private bool _isJumping;
     private bool _isSprinting;
     private bool _isCrouching;
+    private bool _isNoclip;
     private float _originalHeight;
     private Vector3 _originalPivotPosition;
     private float _currentHeight;
@@ -82,6 +87,11 @@ public partial class PrototypeController : CharacterBody3D
         _cameraPivot = GetNode<Node3D>("Node3D");
         _playerCamera = _cameraPivot.GetNode<Camera3D>("Camera3D");
         
+        // noclip vars
+        _originalCollisionLayer = CollisionLayer;
+        _originalCollisionMask = CollisionMask;
+        _originalGravityMultiplier = _gravityMultiplier;
+            
         if (Engine.IsEditorHint()) return;
         
         // Initialize state
@@ -123,6 +133,7 @@ public partial class PrototypeController : CharacterBody3D
         // Validate optional actions
         _actionStates[_sprintAction] = InputMap.HasAction(_sprintAction);
         _actionStates[_crouchAction] = InputMap.HasAction(_crouchAction);
+        _actionStates[_NoclipAction] = InputMap.HasAction(_NoclipAction);
     }
 
     private bool IsActionValid(StringName action)
@@ -140,6 +151,11 @@ public partial class PrototypeController : CharacterBody3D
             ToggleMouseCapture();
         }
 
+        if (@event.IsActionPressed("move_noclip"))
+        {
+            ToggleNoclip();
+        }
+
         if (!_enableLook || Input.MouseMode != Input.MouseModeEnum.Captured) return;
         
         if (@event is InputEventMouseMotion mouseMotion)
@@ -147,6 +163,8 @@ public partial class PrototypeController : CharacterBody3D
             HandleMouseLook(mouseMotion.Relative);
         }
     }
+
+
 
     public override void _PhysicsProcess(double delta)
     {
@@ -242,6 +260,12 @@ public partial class PrototypeController : CharacterBody3D
     private void HandleMovement(float delta)
     {
         if (!_enableMovement) return;
+
+        if (_isNoclip)
+        {
+            HandleNoclipMovement(delta);
+            return;
+        }
         
         // Get input axis
         var inputAxis = new Vector2(
@@ -276,6 +300,8 @@ public partial class PrototypeController : CharacterBody3D
         Velocity = new Vector3(horizontalVelocity.X, Velocity.Y, horizontalVelocity.Z);
     }
 
+
+
     private float GetAxisInput(StringName positiveAction, StringName negativeAction)
     {
         float value = 0;
@@ -291,6 +317,30 @@ public partial class PrototypeController : CharacterBody3D
     #endregion
 
     #region Advanced Features
+    private void HandleNoclipMovement(float delta)
+    {
+        float vertical = 0;
+        if (IsActionValid(_jumpAction) && Input.IsActionPressed(_jumpAction)) vertical += 1;
+        if (IsActionValid(_crouchAction) && Input.IsActionPressed(_crouchAction)) vertical -= 1;
+    
+        float forward = IsActionValid(_moveForwardAction) && Input.IsActionPressed(_moveForwardAction) ? 1 : 0;
+        float backward = IsActionValid(_moveBackwardAction) && Input.IsActionPressed(_moveBackwardAction) ? 1 : 0;
+        float right = IsActionValid(_moveRightAction) && Input.IsActionPressed(_moveRightAction) ? 1 : 0;
+        float left = IsActionValid(_moveLeftAction) && Input.IsActionPressed(_moveLeftAction) ? 1 : 0;
+        
+        Vector3 direction = Vector3.Zero;
+        direction += -_playerCamera.GlobalTransform.Basis.Z * (forward - backward);
+        direction += _playerCamera.GlobalTransform.Basis.X * (right - left);
+        direction += Vector3.Up * vertical;
+        direction = direction.Normalized();
+        
+        Vector3 targetVelocity = direction * _baseSpeed;
+        Velocity = Velocity.Lerp(
+            targetVelocity,
+            _acceleration * delta
+        );
+    }
+    
     private void HandleSprint()
     {
         _isSprinting = _enableSprint && 
@@ -387,6 +437,22 @@ public partial class PrototypeController : CharacterBody3D
         Input.MouseMode = Input.MouseMode == Input.MouseModeEnum.Captured
             ? Input.MouseModeEnum.Visible
             : Input.MouseModeEnum.Captured;
+    }
+    
+    private void ToggleNoclip()
+    {
+        if(!_enableNoclip) return;
+        _isNoclip = !_isNoclip;
+        
+        //todo implement noclip logic (collisions + movement)
+
+        _gravityMultiplier = _isNoclip ? 0 : _originalGravityMultiplier;
+        CollisionLayer = _isNoclip ? 0 : _originalCollisionLayer;
+        CollisionMask = _isNoclip ? 0 : _originalCollisionMask;
+        
+        //Velocity reset 
+        Velocity = Vector3.Zero;
+        
     }
 
     private void UpdateTimers(float delta)
