@@ -42,7 +42,7 @@ public partial class PrototypeController : CharacterBody3D
     [Export] private StringName _jumpAction = "move_jump";
     [Export] private StringName _sprintAction = "move_sprint";
     [Export] private StringName _crouchAction = "move_crouch";
-    [Export] private StringName _NoclipAction = "move_noclip";
+    [Export] private StringName _noclipAction = "move_noclip";
     #endregion
 
     #region Node References
@@ -133,7 +133,7 @@ public partial class PrototypeController : CharacterBody3D
         // Validate optional actions
         _actionStates[_sprintAction] = InputMap.HasAction(_sprintAction);
         _actionStates[_crouchAction] = InputMap.HasAction(_crouchAction);
-        _actionStates[_NoclipAction] = InputMap.HasAction(_NoclipAction);
+        _actionStates[_noclipAction] = InputMap.HasAction(_noclipAction);
     }
 
     private bool IsActionValid(StringName action)
@@ -151,10 +151,14 @@ public partial class PrototypeController : CharacterBody3D
             ToggleMouseCapture();
         }
 
-        if (@event.IsActionPressed("move_noclip"))
+        if (IsActionValid("_enableNoclip"))
         {
-            ToggleNoclip();
+            if (_enableNoclip && @event.IsActionPressed("move_noclip"))
+            {
+                ToggleNoclip();
+            }
         }
+
 
         if (!_enableLook || Input.MouseMode != Input.MouseModeEnum.Captured) return;
         
